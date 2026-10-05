@@ -94,7 +94,7 @@
                     </div>
                     <div class="space-y-1">
                         <h3 class="text-xl font-bold text-slate-800">Dashboard & Color Quotation</h3>
-                        <p class="text-xs text-slate-500">View detailed quotation tables with small color swatches, mixing recipes, bottle counts, pricing (₹25/15ml or ₹320/500ml), and download your bill as an image.</p>
+                        <p class="text-xs text-slate-500">View live Google Sheet quotation tables with small color swatches, mixing recipes, bottle counts, pricing (₹25/15ml or ₹320/500ml), and download your bill as an image.</p>
                     </div>
                     <span class="inline-flex items-center text-xs font-semibold text-violet-600 pt-2">
                         View Dashboard <i class="fa-solid fa-arrow-right ml-1.5 transition group-hover:translate-x-1"></i>
@@ -207,6 +207,10 @@
                         <i class="fa-solid fa-file-arrow-down"></i>
                         <span>Download Color Quotation as Image</span>
                     </button>
+                    <button id="refresh-dashboard-btn" onclick="updateDashboardView()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-2 rounded-xl text-xs transition shadow-sm flex items-center space-x-1.5">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span>Refresh</span>
+                    </button>
                     <h3 class="text-sm font-bold text-slate-700">Color Quotation Dashboard</h3>
                 </div>
             </div>
@@ -216,7 +220,7 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                     <div>
                         <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Cumulative Color Quotation</h2>
-                        <p class="text-xs text-slate-500 mt-1">Detailed quotation with color swatches, mixing recipes, bottle counts & pricing (₹25/15ml or ₹320/500ml) &bull; Created by Darpan Sukla</p>
+                        <p class="text-xs text-slate-500 mt-1">Detailed quotation loaded from Google Sheet &bull; Mixing recipes, bottle counts & pricing (₹25/15ml or ₹320/500ml) &bull; Created by Darpan Sukla</p>
                     </div>
                     <span id="dash-total-budget-badge" class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-2xl text-sm font-bold">Total Amount: ₹0</span>
                 </div>
@@ -258,6 +262,7 @@
     <!-- Application Logic -->
     <script>
         const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyS4-y4P1_GFPzyLAuEN-QJwtIEjHPaaHB02jRfH_uIIY9YXkeC-bU2lEKWKonvRtDb/exec";
+        const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTibADSXA2A775syY1CH140K9gwuZYkQAMcFvTM8PnRo6QwjtUxHYYP8b6GtXhWvdjZmU8NQV6Rr0Rt/pub?gid=0&single=true&output=csv";
 
         const studentAcrylicColors = [
             { name: "White", rgb: [255, 255, 255], recipe: "Direct tube color (Base)" },
@@ -348,16 +353,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        let colorInventory = JSON.parse(localStorage.getItem('CanvasColor IQ_inventory') || '{}');
-
-        function recordToInventory(detectedList, totalMl) {
-            detectedList.forEach(item => {
-                const mlNeeded = parseFloat((item.percentage * totalMl).toFixed(1));
-                colorInventory[item.name] = (colorInventory[item.name] || 0) + mlNeeded;
-            });
-            localStorage.setItem('CanvasColor IQ_inventory', JSON.stringify(colorInventory));
-        }
-
         function calculateCostAndBottles(ml) {
             if (ml >= 500) {
                 const bottles500 = Math.floor(ml / 500);
@@ -378,51 +373,129 @@
             }
         }
 
-        function updateDashboardView() {
-            const tableBody = document.getElementById('dashboard-table-body');
-            const totalBadge = document.getElementById('dash-total-budget-badge');
-            tableBody.innerHTML = '';
-
-            const entries = Object.entries(colorInventory);
-            if (entries.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-xs">No paint orders recorded yet. Analyze an artwork and submit!</td></tr>';
-                totalBadge.textContent = "Total Amount: ₹0";
-                return;
+        // Robust CSV Parser that handles quoted fields containing commas
+        function parseCSV(text) {
+            const lines = text.split('\n');
+            const result = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const row = [];
+                let inQuotes = false;
+                let entry = '';
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        row.push(entry.trim());
+                        entry = '';
+                    } else {
+                        entry += char;
+                    }
+                }
+                row.push(entry.trim());
+                result.push(row);
             }
-
-            let grandTotalAmount = 0;
-            entries.forEach(([name, ml], index) => {
-                const calc = calculateCostAndBottles(ml);
-                grandTotalAmount += calc.cost;
-
-                const ref = studentAcrylicColors.find(c => c.name === name);
-                const hex = ref ? rgbToHex(ref.rgb[0], ref.rgb[1], ref.rgb[2]) : '#6366F1';
-                const recipeText = ref ? ref.recipe : 'Direct tube color';
-
-                const row = document.createElement('tr');
-                row.className = "hover:bg-slate-50/80 transition";
-                row.innerHTML = `
-                    <td class="py-3.5 px-4 font-bold text-slate-500">#${index + 1}</td>
-                    <td class="py-3.5 px-4 flex items-center space-x-2.5">
-                        <span class="w-4 h-4 rounded-full inline-block border border-black/10 shrink-0 shadow-2xs" style="background-color: ${hex};"></span>
-                        <span class="font-bold text-slate-900">${name}</span>
-                    </td>
-                    <td class="py-3.5 px-4 text-xs text-indigo-900 bg-indigo-50/30 rounded-lg px-2 my-1">${recipeText}</td>
-                    <td class="py-3.5 px-4 text-slate-600">${ml.toFixed(1)} ml</td>
-                    <td class="py-3.5 px-4 text-indigo-600 font-semibold">${calc.status}</td>
-                    <td class="py-3.5 px-4 text-right font-extrabold text-emerald-600">₹${calc.cost}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            totalBadge.textContent = `Total Order Amount: ₹${grandTotalAmount}`;
+            return result;
         }
 
-        // Native Color Quotation Image Exporter (Without Mixing Recipes on the Image)
+        // Fetch Google Sheet data and populate Dashboard
+        async function updateDashboardView() {
+            const tableBody = document.getElementById('dashboard-table-body');
+            const totalBadge = document.getElementById('dash-total-budget-badge');
+            
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-xs"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading live data from Google Sheet...</td></tr>';
+            totalBadge.textContent = "Total Amount: Loading...";
+
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                if (!response.ok) throw new Error("Failed to fetch Google Sheet CSV");
+                
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+
+                if (rows.length <= 1) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-xs">No records found in the Google Sheet. Analyze an artwork and submit!</td></tr>';
+                    totalBadge.textContent = "Total Amount: ₹0";
+                    return;
+                }
+
+                // Expected Headers: Timestamp | Artwork Name | Canvas Size | Total Canvas ml | Color Name | Coverage (%) | Quantity (ml) | Mixing Recipe
+                const headers = rows[0].map(h => h.replace(/^["']|["']$/g, '').trim());
+                const dataRows = rows.slice(1);
+
+                // Aggregate quantities by Color Name
+                const aggregatedColors = {};
+
+                dataRows.forEach(row => {
+                    const colorName = row[4] ? row[4].replace(/^["']|["']$/g, '').trim() : '';
+                    const qtyMl = parseFloat(row[6]) || 0;
+                    const recipe = row[7] ? row[7].replace(/^["']|["']$/g, '').trim() : '';
+
+                    if (!colorName) return;
+
+                    if (!aggregatedColors[colorName]) {
+                        aggregatedColors[colorName] = { totalMl: 0, recipe: recipe };
+                    }
+                    aggregatedColors[colorName].totalMl += qtyMl;
+                    if (recipe && !aggregatedColors[colorName].recipe) {
+                        aggregatedColors[colorName].recipe = recipe;
+                    }
+                });
+
+                const entries = Object.entries(aggregatedColors);
+                if (entries.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-xs">No valid color records found in the Google Sheet.</td></tr>';
+                    totalBadge.textContent = "Total Amount: ₹0";
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                let grandTotalAmount = 0;
+
+                entries.forEach(([name, data], index) => {
+                    const ml = data.totalMl;
+                    const calc = calculateCostAndBottles(ml);
+                    grandTotalAmount += calc.cost;
+
+                    const ref = studentAcrylicColors.find(c => c.name.toLowerCase() === name.toLowerCase());
+                    const hex = ref ? rgbToHex(ref.rgb[0], ref.rgb[1], ref.rgb[2]) : '#6366F1';
+                    const recipeText = data.recipe || (ref ? ref.recipe : 'Direct tube color');
+
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-slate-50/80 transition";
+                    row.innerHTML = `
+                        <td class="py-3.5 px-4 font-bold text-slate-500">#${index + 1}</td>
+                        <td class="py-3.5 px-4 flex items-center space-x-2.5">
+                            <span class="w-4 h-4 rounded-full inline-block border border-black/10 shrink-0 shadow-2xs" style="background-color: ${hex};"></span>
+                            <span class="font-bold text-slate-900">${name}</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-indigo-900 bg-indigo-50/30 rounded-lg px-2 my-1">${recipeText}</td>
+                        <td class="py-3.5 px-4 text-slate-600">${ml.toFixed(1)} ml</td>
+                        <td class="py-3.5 px-4 text-indigo-600 font-semibold">${calc.status}</td>
+                        <td class="py-3.5 px-4 text-right font-extrabold text-emerald-600">₹${calc.cost}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                totalBadge.textContent = `Total Order Amount: ₹${grandTotalAmount}`;
+            } catch (error) {
+                console.error("Error loading Google Sheet data:", error);
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-rose-500 text-xs">Failed to load live Google Sheet data. Please check your internet connection or URL.</td></tr>';
+                totalBadge.textContent = "Total Amount: ₹0";
+                showToast("Error syncing with Google Sheet.");
+            }
+        }
+
+        // Native Color Quotation Image Exporter
         const downloadQuotationImageBtn = document.getElementById('download-quotation-image-btn');
         downloadQuotationImageBtn.addEventListener('click', () => {
-            const entries = Object.entries(colorInventory);
-            if (entries.length === 0) {
+            const rows = document.querySelectorAll('#dashboard-table-body tr');
+            if (rows.length === 0 || rows[0].querySelector('td').colSpan > 1) {
                 showToast("No color items found to export quotation!");
                 return;
             }
@@ -436,7 +509,7 @@
             const headerHeight = 160;
             const rowHeight = 52;
             const footerHeight = 130;
-            const height = headerHeight + 60 + (entries.length * rowHeight) + footerHeight + 40;
+            const height = headerHeight + 60 + (rows.length * rowHeight) + footerHeight + 40;
 
             canvas.width = width;
             canvas.height = height;
@@ -478,7 +551,7 @@
 
             ctx.fillStyle = "#0F172A";
             ctx.font = "bold 12px sans-serif";
-            ctx.fillText("Cumulative Color Quotation", 60, 158);
+            ctx.fillText("Google Sheet Cumulative Quotation", 60, 158);
             ctx.fillText("₹25/15ml or ₹320/500ml", 340, 158);
             ctx.fillText(new Date().toLocaleDateString(), 640, 158);
 
@@ -495,15 +568,23 @@
             ctx.fillText("Bottle Status", 540, startY + 23);
             ctx.fillText("Price", 740, startY + 23);
 
-            // Table Rows
-            let grandTotal = 0;
+            // Extract table rows content for canvas export
             let currentY = startY + 36;
+            let grandTotal = 0;
 
-            entries.forEach(([name, ml], index) => {
-                const calc = calculateCostAndBottles(ml);
-                grandTotal += calc.cost;
+            const trs = document.querySelectorAll('#dashboard-table-body tr');
+            trs.forEach((tr, index) => {
+                const tds = tr.querySelectorAll('td');
+                if (tds.length < 6) return;
 
-                const ref = studentAcrylicColors.find(c => c.name === name);
+                const itemName = tds[1].textContent.trim();
+                const mlText = tds[3].textContent.trim();
+                const statusText = tds[4].textContent.trim();
+                const priceText = tds[5].textContent.trim();
+                const numericPrice = parseFloat(priceText.replace('₹', '')) || 0;
+                grandTotal += numericPrice;
+
+                const ref = studentAcrylicColors.find(c => c.name.toLowerCase() === itemName.toLowerCase());
                 const hex = ref ? rgbToHex(ref.rgb[0], ref.rgb[1], ref.rgb[2]) : '#6366F1';
 
                 // Row zebra striping
@@ -536,22 +617,22 @@
                 // Color Name
                 ctx.fillStyle = "#0F172A";
                 ctx.font = "bold 13px sans-serif";
-                ctx.fillText(name, 182, currentY + 32);
+                ctx.fillText(itemName, 182, currentY + 32);
 
                 // Quantity
                 ctx.fillStyle = "#334155";
                 ctx.font = "12px sans-serif";
-                ctx.fillText(`${ml.toFixed(1)} ml`, 400, currentY + 32);
+                ctx.fillText(mlText, 400, currentY + 32);
 
                 // Bottle Status
                 ctx.fillStyle = "#2563EB";
                 ctx.font = "bold 12px sans-serif";
-                ctx.fillText(calc.status, 540, currentY + 32);
+                ctx.fillText(statusText, 540, currentY + 32);
 
                 // Price
                 ctx.fillStyle = "#059669";
                 ctx.font = "bold 13px sans-serif";
-                ctx.fillText(`₹${calc.cost}`, 740, currentY + 32);
+                ctx.fillText(priceText, 740, currentY + 32);
 
                 currentY += rowHeight;
             });
@@ -864,8 +945,6 @@
             };
 
             try {
-                recordToInventory(lastAnalyzedData, totalCanvasMl);
-
                 await fetch(APPS_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -873,9 +952,9 @@
                     body: JSON.stringify(payload)
                 });
 
-                showToast("Submitted successfully! Ready for new image.");
+                showToast("Submitted successfully to Google Sheet!");
             } catch (error) {
-                showToast("Submitted and logged to Dashboard inventory!");
+                showToast("Submission error occurred.");
             } finally {
                 submitSheetBtn.disabled = false;
                 submitBtnText.textContent = "Submit";
