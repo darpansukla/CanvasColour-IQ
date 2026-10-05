@@ -26,6 +26,12 @@
         .animate-fade-in {
             animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        /* Drag and Drop visual feedback styles */
+        .drag-over {
+            border-color: #4f46e5 !important;
+            background-color: rgba(79, 70, 229, 0.08) !important;
+            transform: scale(1.02);
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-full flex flex-col justify-between selection:bg-indigo-600 selection:text-white">
@@ -57,7 +63,7 @@
 
             <div class="flex items-center space-x-2 text-xs text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full shadow-2xs">
                 <i class="fa-solid fa-code text-indigo-600"></i>
-                <span>Designed & Built by <strong class="text-slate-900 font-semibold">Darpan Sukla</strong></span>
+                <span>Designed & Built by <strong class="text-slate-900 font-semibold">Darpan Sukla</strong>[cite: 1]</span>
             </div>
         </div>
     </header>
@@ -220,7 +226,7 @@
                 <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                     <div>
                         <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Cumulative Color Quotation</h2>
-                        <p class="text-xs text-slate-500 mt-1">Detailed quotation loaded from Google Sheet &bull; Mixing recipes, bottle counts & pricing (₹25/15ml or ₹320/500ml) &bull; Created by Darpan Sukla</p>
+                        <p class="text-xs text-slate-500 mt-1">Detailed quotation loaded from Google Sheet &bull; Grouped serially with mixing recipes & pricing &bull; Created by Darpan Sukla[cite: 1]</p>
                     </div>
                     <span id="dash-total-budget-badge" class="bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-2xl text-sm font-bold">Total Amount: ₹0</span>
                 </div>
@@ -250,7 +256,7 @@
     <!-- Modern Clean Footer -->
     <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 space-y-1">
         <p>CanvasColor IQ &bull; Student Acrylic Color & Mixing Assistant</p>
-        <p class="text-slate-600 font-medium">Crafted with precision by <span class="text-indigo-600">Darpan Sukla</span></p>
+        <p class="text-slate-600 font-medium">Crafted with precision by <span class="text-indigo-600">Darpan Sukla</span>[cite: 1]</p>
     </footer>
 
     <!-- Toast Notification -->
@@ -265,43 +271,49 @@
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTibADSXA2A775syY1CH140K9gwuZYkQAMcFvTM8PnRo6QwjtUxHYYP8b6GtXhWvdjZmU8NQV6Rr0Rt/pub?gid=0&single=true&output=csv";
 
         const studentAcrylicColors = [
-            { name: "White", rgb: [255, 255, 255], recipe: "Direct tube color (Base)" },
-            { name: "Black", rgb: [15, 15, 15], recipe: "Direct tube color" },
-            { name: "Grey", rgb: [128, 128, 128], recipe: "Black + White" },
+            { name: "White", rgb: [255, 255, 255], recipe: "Direct tube color (Base)", family: "Monochrome" },
+            { name: "Black", rgb: [15, 15, 15], recipe: "Direct tube color", family: "Monochrome" },
+            { name: "Grey", rgb: [128, 128, 128], recipe: "Black + White", family: "Monochrome" },
             
-            { name: "Light Yellow", rgb: [255, 240, 120], recipe: "Yellow + White" },
-            { name: "Yellow", rgb: [255, 215, 0], recipe: "Direct tube color" },
-            { name: "Dark Yellow", rgb: [200, 160, 0], recipe: "Yellow + a touch of Brown" },
+            { name: "Light Yellow", rgb: [255, 240, 120], recipe: "Yellow + White", family: "Yellow" },
+            { name: "Yellow", rgb: [255, 215, 0], recipe: "Direct tube color", family: "Yellow" },
+            { name: "Dark Yellow", rgb: [200, 160, 0], recipe: "Yellow + a touch of Brown", family: "Yellow" },
             
-            { name: "Light Green", rgb: [120, 210, 120], recipe: "Green + White" },
-            { name: "Green", rgb: [40, 140, 70], recipe: "Direct tube color (or Blue + Yellow)" },
-            { name: "Dark Green", rgb: [15, 80, 35], recipe: "Green + a touch of Black" },
+            { name: "Light Green", rgb: [120, 210, 120], recipe: "Green + White", family: "Green" },
+            { name: "Green", rgb: [40, 140, 70], recipe: "Direct tube color (or Blue + Yellow)", family: "Green" },
+            { name: "Dark Green", rgb: [15, 80, 35], recipe: "Green + a touch of Black", family: "Green" },
             
-            { name: "Light Blue", rgb: [135, 206, 250], recipe: "Blue + White" },
-            { name: "Blue", rgb: [0, 114, 187], recipe: "Direct tube color" },
-            { name: "Dark Blue", rgb: [10, 50, 110], recipe: "Blue + a touch of Black" },
+            { name: "Light Blue", rgb: [135, 206, 250], recipe: "Blue + White", family: "Blue" },
+            { name: "Blue", rgb: [0, 114, 187], recipe: "Direct tube color", family: "Blue" },
+            { name: "Dark Blue", rgb: [10, 50, 110], recipe: "Blue + a touch of Black", family: "Blue" },
             
-            { name: "Light Red", rgb: [255, 110, 110], recipe: "Red + White" },
-            { name: "Red", rgb: [215, 25, 32], recipe: "Direct tube color" },
-            { name: "Dark Red", rgb: [130, 20, 20], recipe: "Red + a touch of Black" },
+            { name: "Light Red", rgb: [255, 110, 110], recipe: "Red + White", family: "Red" },
+            { name: "Red", rgb: [215, 25, 32], recipe: "Direct tube color", family: "Red" },
+            { name: "Dark Red", rgb: [130, 20, 20], recipe: "Red + a touch of Black", family: "Red" },
             
-            { name: "Light Pink", rgb: [255, 192, 203], recipe: "Red + lots of White" },
-            { name: "Pink", rgb: [240, 130, 160], recipe: "Red + White" },
+            { name: "Light Pink", rgb: [255, 192, 203], recipe: "Red + lots of White", family: "Pink" },
+            { name: "Pink", rgb: [240, 130, 160], recipe: "Red + White", family: "Pink" },
             
-            { name: "Light Orange", rgb: [255, 180, 120], recipe: "Orange + White" },
-            { name: "Orange", rgb: [245, 120, 20], recipe: "Red + Yellow" },
-            { name: "Dark Orange", rgb: [180, 80, 10], recipe: "Orange + a touch of Brown" },
+            { name: "Light Orange", rgb: [255, 180, 120], recipe: "Orange + White", family: "Orange" },
+            { name: "Orange", rgb: [245, 120, 20], recipe: "Red + Yellow", family: "Orange" },
+            { name: "Dark Orange", rgb: [180, 80, 10], recipe: "Orange + a touch of Brown", family: "Orange" },
             
-            { name: "Light Purple", rgb: [200, 160, 230], recipe: "Purple + White" },
-            { name: "Purple", rgb: [110, 40, 160], recipe: "Blue + Red" },
-            { name: "Dark Purple", rgb: [60, 20, 90], recipe: "Purple + a touch of Black" },
+            { name: "Light Purple", rgb: [200, 160, 230], recipe: "Purple + White", family: "Purple" },
+            { name: "Purple", rgb: [110, 40, 160], recipe: "Blue + Red", family: "Purple" },
+            { name: "Dark Purple", rgb: [60, 20, 90], recipe: "Purple + a touch of Black", family: "Purple" },
             
-            { name: "Light Brown", rgb: [180, 130, 90], recipe: "Brown + White" },
-            { name: "Brown", rgb: [110, 60, 20], recipe: "Red + Green (or Orange + Black)" },
-            { name: "Dark Brown", rgb: [65, 35, 10], recipe: "Brown + Black" },
+            { name: "Light Brown", rgb: [180, 130, 90], recipe: "Brown + White", family: "Brown" },
+            { name: "Brown", rgb: [110, 60, 20], recipe: "Red + Green (or Orange + Black)", family: "Brown" },
+            { name: "Dark Brown", rgb: [65, 35, 10], recipe: "Brown + Black", family: "Brown" },
             
-            { name: "Skin", rgb: [245, 210, 165], recipe: "White + Yellow + tiny touch of Red & Brown" }
+            { name: "Skin", rgb: [245, 210, 165], recipe: "White + Yellow + tiny touch of Red & Brown", family: "Skin" }
         ];
+
+        // Serial sort ordering map for master color families and variants
+        const colorOrderMap = {};
+        studentAcrylicColors.forEach((c, index) => {
+            colorOrderMap[c.name.toLowerCase()] = { index: index, family: c.family };
+        });
 
         const canvasSizeTotalMl = {
             "a4": 15,
@@ -361,15 +373,15 @@
                 
                 const cost = (bottles500 * 320) + (bottles15 * 25);
                 let statusParts = [];
-                if (bottles500 > 0) statusParts.push(`${bottles500} × 500ml bottle`);
-                if (bottles15 > 0) statusParts.push(`${bottles15} × 15ml bottle`);
+                if (bottles500 > 0) statusParts.push(`${bottles500} × 500 ml bottle`);
+                if (bottles15 > 0) statusParts.push(`${bottles15}`);
                 
-                return { cost, status: statusParts.join(' + ') };
+                return { cost, status: statusParts.join(' + '), bottles500, bottles15, totalBottlesCount: bottles500 + bottles15 };
             } else {
                 const bottles15 = Math.ceil(ml / 15);
                 const cost = bottles15 * 25;
-                const status = bottles15 === 1 ? '1 bottle required' : `${bottles15} bottles required`;
-                return { cost, status };
+                const status = `${bottles15}`;
+                return { cost, status, bottles500: 0, bottles15, totalBottlesCount: bottles15 };
             }
         }
 
@@ -403,7 +415,7 @@
             return result;
         }
 
-        // Fetch Google Sheet data and populate Dashboard
+        // Fetch Google Sheet data and populate Dashboard with Serially Sorted Similar Colors & Mixing Recipes & Pricing
         async function updateDashboardView() {
             const tableBody = document.getElementById('dashboard-table-body');
             const totalBadge = document.getElementById('dash-total-budget-badge');
@@ -424,8 +436,6 @@
                     return;
                 }
 
-                // Expected Headers: Timestamp | Artwork Name | Canvas Size | Total Canvas ml | Color Name | Coverage (%) | Quantity (ml) | Mixing Recipe
-                const headers = rows[0].map(h => h.replace(/^["']|["']$/g, '').trim());
                 const dataRows = rows.slice(1);
 
                 // Aggregate quantities by Color Name
@@ -447,29 +457,83 @@
                     }
                 });
 
-                const entries = Object.entries(aggregatedColors);
+                let entries = Object.entries(aggregatedColors);
                 if (entries.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-slate-400 text-xs">No valid color records found in the Google Sheet.</td></tr>';
                     totalBadge.textContent = "Total Amount: ₹0";
                     return;
                 }
 
+                // Sort entries serially by master student acrylic color sequence
+                entries.sort((a, b) => {
+                    const nameA = a[0].toLowerCase();
+                    const nameB = b[0].toLowerCase();
+                    const infoA = colorOrderMap[nameA] || { index: 999, family: 'Other' };
+                    const infoB = colorOrderMap[nameB] || { index: 999, family: 'Other' };
+                    return infoA.index - infoB.index;
+                });
+
                 tableBody.innerHTML = '';
                 let grandTotalAmount = 0;
+                let itemCounter = 1;
 
-                entries.forEach(([name, data], index) => {
+                let processedEntries = [];
+                entries.forEach(([name, data]) => {
                     const ml = data.totalMl;
                     const calc = calculateCostAndBottles(ml);
                     grandTotalAmount += calc.cost;
+                    processedEntries.push({ name, data, calc, itemNo: itemCounter++ });
+                });
 
+                // Render table rows with draggable attributes for easy merging
+                processedEntries.forEach(item => {
+                    const { name, data, calc, itemNo } = item;
+                    const ml = data.totalMl;
                     const ref = studentAcrylicColors.find(c => c.name.toLowerCase() === name.toLowerCase());
                     const hex = ref ? rgbToHex(ref.rgb[0], ref.rgb[1], ref.rgb[2]) : '#6366F1';
                     const recipeText = data.recipe || (ref ? ref.recipe : 'Direct tube color');
 
                     const row = document.createElement('tr');
-                    row.className = "hover:bg-slate-50/80 transition";
+                    row.className = "order-item-card hover:bg-slate-50/80 transition cursor-grab active:cursor-grabbing";
+                    row.setAttribute('draggable', 'true');
+                    row.setAttribute('data-color-name', name);
+                    row.setAttribute('data-ml', ml);
+                    row.setAttribute('data-cost', calc.cost);
+                    row.setAttribute('data-recipe', recipeText);
+
+                    // Drag and Drop Event Listeners for merging any color row onto another
+                    row.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', name);
+                        row.classList.add('opacity-40', 'border-2', 'border-dashed', 'border-indigo-600');
+                    });
+
+                    row.addEventListener('dragend', () => {
+                        row.classList.remove('opacity-40', 'border-2', 'border-dashed', 'border-indigo-600');
+                        document.querySelectorAll('#dashboard-table-body tr').forEach(r => r.classList.remove('drag-over'));
+                    });
+
+                    row.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        row.classList.add('drag-over');
+                    });
+
+                    row.addEventListener('dragleave', () => {
+                        row.classList.remove('drag-over');
+                    });
+
+                    row.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        row.classList.remove('drag-over');
+                        const draggedColorName = e.dataTransfer.getData('text/plain');
+                        if (draggedColorName && draggedColorName !== name) {
+                            mergeColorsInDashboard(draggedColorName, name);
+                        }
+                    });
+
                     row.innerHTML = `
-                        <td class="py-3.5 px-4 font-bold text-slate-500">#${index + 1}</td>
+                        <td class="py-3.5 px-4 font-bold text-slate-500 flex items-center gap-1.5" title="Drag and drop onto another row to merge quantities and show total">
+                            <i class="fa-solid fa-grip-vertical text-slate-300 text-xs"></i> #${itemNo}
+                        </td>
                         <td class="py-3.5 px-4 flex items-center space-x-2.5">
                             <span class="w-4 h-4 rounded-full inline-block border border-black/10 shrink-0 shadow-2xs" style="background-color: ${hex};"></span>
                             <span class="font-bold text-slate-900">${name}</span>
@@ -491,11 +555,171 @@
             }
         }
 
+        // Client-side Custom Color Merging via Drag and Drop
+        let customMergedDataOverrides = {};
+
+        function mergeColorsInDashboard(sourceColor, targetColor) {
+            const rows = document.querySelectorAll('#dashboard-table-body tr[data-color-name]');
+            let sourceMl = 0;
+            let targetMl = 0;
+
+            rows.forEach(r => {
+                const cName = r.getAttribute('data-color-name');
+                const cMl = parseFloat(r.getAttribute('data-ml')) || 0;
+                if (cName.toLowerCase() === sourceColor.toLowerCase()) sourceMl = cMl;
+                if (cName.toLowerCase() === targetColor.toLowerCase()) targetMl = cMl;
+            });
+
+            const combinedMl = targetMl + sourceMl;
+            customMergedDataOverrides[targetColor.toLowerCase()] = combinedMl;
+            customMergedDataOverrides[sourceColor.toLowerCase()] = -1;
+
+            showToast(`Successfully merged ${sourceColor} into ${targetColor} (Total: ${combinedMl.toFixed(1)} ml)`);
+            renderDashboardWithOverrides();
+        }
+
+        async function renderDashboardWithOverrides() {
+            await updateDashboardViewWithCustomOverrides();
+        }
+
+        async function updateDashboardViewWithCustomOverrides() {
+            const tableBody = document.getElementById('dashboard-table-body');
+            const totalBadge = document.getElementById('dash-total-budget-badge');
+            
+            try {
+                const response = await fetch(GOOGLE_SHEET_CSV_URL);
+                if (!response.ok) throw new Error("Failed to fetch Google Sheet CSV");
+                
+                const csvText = await response.text();
+                const rows = parseCSV(csvText);
+                if (rows.length <= 1) return;
+
+                const dataRows = rows.slice(1);
+                const aggregatedColors = {};
+
+                dataRows.forEach(row => {
+                    const colorName = row[4] ? row[4].replace(/^["']|["']$/g, '').trim() : '';
+                    const qtyMl = parseFloat(row[6]) || 0;
+                    const recipe = row[7] ? row[7].replace(/^["']|["']$/g, '').trim() : '';
+
+                    if (!colorName) return;
+
+                    if (!aggregatedColors[colorName]) {
+                        aggregatedColors[colorName] = { totalMl: 0, recipe: recipe };
+                    }
+                    aggregatedColors[colorName].totalMl += qtyMl;
+                    if (recipe && !aggregatedColors[colorName].recipe) {
+                        aggregatedColors[colorName].recipe = recipe;
+                    }
+                });
+
+                for (const [key, val] of Object.entries(customMergedDataOverrides)) {
+                    if (val === -1) {
+                        for (const cName in aggregatedColors) {
+                            if (cName.toLowerCase() === key) {
+                                delete aggregatedColors[cName];
+                            }
+                        }
+                    } else {
+                        for (const cName in aggregatedColors) {
+                            if (cName.toLowerCase() === key) {
+                                aggregatedColors[cName].totalMl = val;
+                            }
+                        }
+                    }
+                }
+
+                let entries = Object.entries(aggregatedColors);
+                entries.sort((a, b) => {
+                    const nameA = a[0].toLowerCase();
+                    const nameB = b[0].toLowerCase();
+                    const infoA = colorOrderMap[nameA] || { index: 999, family: 'Other' };
+                    const infoB = colorOrderMap[nameB] || { index: 999, family: 'Other' };
+                    return infoA.index - infoB.index;
+                });
+
+                tableBody.innerHTML = '';
+                let grandTotalAmount = 0;
+                let itemCounter = 1;
+
+                let processedEntries = [];
+                entries.forEach(([name, data]) => {
+                    const ml = data.totalMl;
+                    const calc = calculateCostAndBottles(ml);
+                    grandTotalAmount += calc.cost;
+                    processedEntries.push({ name, data, calc, itemNo: itemCounter++ });
+                });
+
+                processedEntries.forEach(item => {
+                    const { name, data, calc, itemNo } = item;
+                    const ml = data.totalMl;
+                    const ref = studentAcrylicColors.find(c => c.name.toLowerCase() === name.toLowerCase());
+                    const hex = ref ? rgbToHex(ref.rgb[0], ref.rgb[1], ref.rgb[2]) : '#6366F1';
+                    const recipeText = data.recipe || (ref ? ref.recipe : 'Direct tube color');
+
+                    const row = document.createElement('tr');
+                    row.className = "order-item-card hover:bg-slate-50/80 transition cursor-grab active:cursor-grabbing";
+                    row.setAttribute('draggable', 'true');
+                    row.setAttribute('data-color-name', name);
+                    row.setAttribute('data-ml', ml);
+                    row.setAttribute('data-cost', calc.cost);
+                    row.setAttribute('data-recipe', recipeText);
+
+                    row.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', name);
+                        row.classList.add('opacity-40', 'border-2', 'border-dashed', 'border-indigo-600');
+                    });
+
+                    row.addEventListener('dragend', () => {
+                        row.classList.remove('opacity-40', 'border-2', 'border-dashed', 'border-indigo-600');
+                        document.querySelectorAll('#dashboard-table-body tr').forEach(r => r.classList.remove('drag-over'));
+                    });
+
+                    row.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        row.classList.add('drag-over');
+                    });
+
+                    row.addEventListener('dragleave', () => {
+                        row.classList.remove('drag-over');
+                    });
+
+                    row.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        row.classList.remove('drag-over');
+                        const draggedColorName = e.dataTransfer.getData('text/plain');
+                        if (draggedColorName && draggedColorName !== name) {
+                            mergeColorsInDashboard(draggedColorName, name);
+                        }
+                    });
+
+                    row.innerHTML = `
+                        <td class="py-3.5 px-4 font-bold text-slate-500 flex items-center gap-1.5" title="Drag and drop onto another row to merge quantities and show total">
+                            <i class="fa-solid fa-grip-vertical text-slate-300 text-xs"></i> #${itemNo}
+                        </td>
+                        <td class="py-3.5 px-4 flex items-center space-x-2.5">
+                            <span class="w-4 h-4 rounded-full inline-block border border-black/10 shrink-0 shadow-2xs" style="background-color: ${hex};"></span>
+                            <span class="font-bold text-slate-900">${name}</span>
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-indigo-900 bg-indigo-50/30 rounded-lg px-2 my-1">${recipeText}</td>
+                        <td class="py-3.5 px-4 text-slate-600">${ml.toFixed(1)} ml</td>
+                        <td class="py-3.5 px-4 text-indigo-600 font-semibold">${calc.status}</td>
+                        <td class="py-3.5 px-4 text-right font-extrabold text-emerald-600">₹${calc.cost}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                totalBadge.textContent = `Total Order Amount: ₹${grandTotalAmount}`;
+            } catch (error) {
+                console.error("Error updating overrides:", error);
+            }
+        }
+
         // Native Color Quotation Image Exporter
         const downloadQuotationImageBtn = document.getElementById('download-quotation-image-btn');
         downloadQuotationImageBtn.addEventListener('click', () => {
-            const rows = document.querySelectorAll('#dashboard-table-body tr');
-            if (rows.length === 0 || rows[0].querySelector('td').colSpan > 1) {
+            const tableRows = document.querySelectorAll('#dashboard-table-body tr');
+            if (tableRows.length === 0) {
                 showToast("No color items found to export quotation!");
                 return;
             }
@@ -507,9 +731,9 @@
             
             const width = 850;
             const headerHeight = 160;
-            const rowHeight = 52;
+            const rowHeight = 46;
             const footerHeight = 130;
-            const height = headerHeight + 60 + (rows.length * rowHeight) + footerHeight + 40;
+            const height = headerHeight + 60 + (tableRows.length * rowHeight) + footerHeight + 40;
 
             canvas.width = width;
             canvas.height = height;
@@ -568,12 +792,10 @@
             ctx.fillText("Bottle Status", 540, startY + 23);
             ctx.fillText("Price", 740, startY + 23);
 
-            // Extract table rows content for canvas export
             let currentY = startY + 36;
             let grandTotal = 0;
 
-            const trs = document.querySelectorAll('#dashboard-table-body tr');
-            trs.forEach((tr, index) => {
+            tableRows.forEach((tr, index) => {
                 const tds = tr.querySelectorAll('td');
                 if (tds.length < 6) return;
 
@@ -587,13 +809,11 @@
                 const ref = studentAcrylicColors.find(c => c.name.toLowerCase() === itemName.toLowerCase());
                 const hex = ref ? rgbToHex(ref.rgb[0], ref.rgb[1], ref.rgb[2]) : '#6366F1';
 
-                // Row zebra striping
                 if (index % 2 === 1) {
                     ctx.fillStyle = "#F8FAFC";
                     ctx.fillRect(40, currentY, width - 80, rowHeight);
                 }
 
-                // Row border bottom
                 ctx.strokeStyle = "#E2E8F0";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
@@ -603,36 +823,31 @@
 
                 ctx.fillStyle = "#475569";
                 ctx.font = "bold 12px sans-serif";
-                ctx.fillText(`#${index + 1}`, 60, currentY + 32);
+                ctx.fillText(tds[0].textContent.replace('#', '').trim(), 60, currentY + 28);
 
-                // Small Round Swatch
                 ctx.fillStyle = hex;
                 ctx.strokeStyle = "rgba(0,0,0,0.15)";
                 ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.arc(162, currentY + 27, 8, 0, 2 * Math.PI);
+                ctx.arc(162, currentY + 23, 7, 0, 2 * Math.PI);
                 ctx.fill();
                 ctx.stroke();
 
-                // Color Name
                 ctx.fillStyle = "#0F172A";
-                ctx.font = "bold 13px sans-serif";
-                ctx.fillText(itemName, 182, currentY + 32);
-
-                // Quantity
-                ctx.fillStyle = "#334155";
-                ctx.font = "12px sans-serif";
-                ctx.fillText(mlText, 400, currentY + 32);
-
-                // Bottle Status
-                ctx.fillStyle = "#2563EB";
                 ctx.font = "bold 12px sans-serif";
-                ctx.fillText(statusText, 540, currentY + 32);
+                ctx.fillText(itemName, 182, currentY + 28);
 
-                // Price
+                ctx.fillStyle = "#334155";
+                ctx.font = "11px sans-serif";
+                ctx.fillText(mlText, 400, currentY + 28);
+
+                ctx.fillStyle = "#2563EB";
+                ctx.font = "bold 11px sans-serif";
+                ctx.fillText(statusText, 540, currentY + 28);
+
                 ctx.fillStyle = "#059669";
-                ctx.font = "bold 13px sans-serif";
-                ctx.fillText(priceText, 740, currentY + 32);
+                ctx.font = "bold 12px sans-serif";
+                ctx.fillText(priceText, 740, currentY + 28);
 
                 currentY += rowHeight;
             });
@@ -959,7 +1174,6 @@
                 submitSheetBtn.disabled = false;
                 submitBtnText.textContent = "Submit";
 
-                // Automatically reset workspace for a new image upload
                 currentImageElement = null;
                 lastAnalyzedData = [];
                 imagePreview.src = "";
